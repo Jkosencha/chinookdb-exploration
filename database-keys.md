@@ -1,106 +1,55 @@
 # Database Keys
 
-A **key** is one or more columns whose values are used to identify rows and to
-link tables together. Keys are what make a relational database "relational" - they
-enforce uniqueness and **referential integrity**.
+**Plain idea:** a key is a column (or a few columns together) used to identify a
+row and to link tables to each other. Keys are what make tables relate.
 
-## Types of keys
+## The main types
 
 | Key | What it is |
 |-----|------------|
-| **Super key** | Any set of columns that uniquely identifies a row - even if it includes extra, unnecessary columns. |
-| **Candidate key** | A *minimal* super key: unique with no redundant column. A table can have several. |
-| **Primary key (PK)** | The one candidate key chosen as the table's main identifier. Must be **unique** and **NOT NULL**. |
-| **Alternate key** | A candidate key that was *not* chosen as the primary key (a.k.a. secondary key). |
-| **Unique key** | A column/set constrained to be unique. Unlike a PK it may allow a single `NULL`. |
-| **Composite (compound) key** | A key made of **two or more columns** combined to be unique. |
-| **Foreign key (FK)** | A column that references the primary key of another table, creating the relationship between them. May be `NULL` and may repeat. |
-| **Natural key** | A key from real-world data that already has business meaning (e.g. an email or ISBN). |
-| **Surrogate key** | An artificial, system-generated identifier (usually an auto-increment integer) with no business meaning. |
+| **Primary key** | The column that uniquely identifies each row in a table. Must be unique and never blank. |
+| **Foreign key** | A column that points to another table's primary key. This is what creates the link between two tables. |
+| **Composite key** | A key made of two or more columns combined, unique only as a pair. |
+| **Surrogate key** | An auto made ID number with no real world meaning (like an auto increment integer). |
+| **Natural key** | A key that already exists in real life, like an email or a phone number. |
+| **Candidate key** | Any column that could serve as the primary key. |
+| **Alternate key** | A candidate key that was not chosen as the primary key. |
 
-Relationship between the "unique-identifier" keys: **every candidate key is a super
-key, but not every super key is a candidate key**, and the **primary key is the
-candidate key you pick** - the rest become alternate keys.
+## Keys used in our database
 
-## Keys found in the Chinook database
+**Primary keys (one per table):**
+Each table has its own ID column as the primary key, for example `ArtistId`,
+`AlbumId`, `TrackId`, `CustomerId`, `InvoiceId`, `EmployeeId`. These are surrogate
+keys (auto made integers).
 
-Chinook is a textbook example of using **surrogate primary keys**: nearly every
-table has an auto-incrementing integer `...Id` column as its PK.
+**Composite key:**
+The `playlist_track` table has no single ID. Its primary key is the pair
+`(PlaylistId, TrackId)` together, since one playlist holds many tracks and one
+track can sit in many playlists.
 
-### Primary keys (all surrogate integers)
+**Foreign keys (the links):**
 
-| Table | Primary key |
-|-------|-------------|
-| `artists` | `ArtistId` |
-| `albums` | `AlbumId` |
-| `tracks` | `TrackId` |
-| `genres` | `GenreId` |
-| `media_types` | `MediaTypeId` |
-| `playlists` | `PlaylistId` |
-| `invoices` | `InvoiceId` |
-| `invoice_items` | `InvoiceLineId` |
-| `customers` | `CustomerId` |
-| `employees` | `EmployeeId` |
-
-Each is declared like:
-
-```sql
-[AlbumId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
-```
-
-`INTEGER PRIMARY KEY AUTOINCREMENT` = a **surrogate key** the database generates
-automatically.
-
-### Composite primary key
-
-The bridge table `playlist_track` has **no surrogate id**. Its primary key is the
-**combination** of both columns:
-
-```sql
-CONSTRAINT [PK_PlaylistTrack] PRIMARY KEY ([PlaylistId], [TrackId])
-```
-
-This is a **composite key**: one `PlaylistId` can appear many times and one
-`TrackId` can appear many times, but the *pair* is unique — which is exactly how a
-many-to-many relationship is modeled.
-
-### Foreign keys
-
-Foreign keys wire the tables together. The main ones:
-
-| Table.Column | References |
-|--------------|------------|
+| Column | Points to |
+|--------|-----------|
 | `albums.ArtistId` | `artists.ArtistId` |
 | `tracks.AlbumId` | `albums.AlbumId` |
 | `tracks.GenreId` | `genres.GenreId` |
-| `tracks.MediaTypeId` | `media_types.MediaTypeId` |
 | `invoices.CustomerId` | `customers.CustomerId` |
 | `invoice_items.InvoiceId` | `invoices.InvoiceId` |
 | `invoice_items.TrackId` | `tracks.TrackId` |
-| `playlist_track.PlaylistId` | `playlists.PlaylistId` |
-| `playlist_track.TrackId` | `tracks.TrackId` |
 | `customers.SupportRepId` | `employees.EmployeeId` |
-| `employees.ReportsTo` | `employees.EmployeeId` *(self-referencing)* |
+| `employees.ReportsTo` | `employees.EmployeeId` (points to its own table) |
 
-`employees.ReportsTo` is a **self-referencing foreign key** — it points back to the
-same table's primary key to model the "who reports to whom" hierarchy.
+`employees.ReportsTo` is special: it points back to the same table to show who
+reports to whom.
 
-### Candidate / alternate / natural keys in Chinook
+## simpler explanation
 
-Chinook does **not declare** extra `UNIQUE` constraints, but conceptually some
-columns are **natural candidate keys** that could serve as alternate keys, e.g.
-`customers.Email` and `employees.Email` (real-world unique identifiers). The
-designers chose surrogate integer PKs instead, which is the usual best practice
-because surrogate keys never change even if the underlying business data does.
-
-## Why surrogate keys here?
-
-- Stable: a `CustomerId` never changes even if the customer's email or name does.
-- Simple joins: FKs are single small integers instead of long composite natural keys.
-- Consistent pattern across all tables (`TableId`).
+> A primary key names each row. A foreign key points to another table's primary
+> key, and that pointer is the relationship.
 
 ## References
 
-- Database Star — *Database Keys: The Complete Guide*: <https://www.databasestar.com/database-keys/>
-- SQLite Primary Key: <https://www.sqlitetutorial.net/sqlite-primary-key/>
-- SQLite Foreign Key: <https://www.sqlitetutorial.net/sqlite-foreign-key/>
+- Database Star, Database Keys Guide: https://www.databasestar.com/database-keys/
+- SQLite Primary Key: https://www.sqlitetutorial.net/sqlite-primary-key/
+- SQLite Foreign Key: https://www.sqlitetutorial.net/sqlite-foreign-key/
